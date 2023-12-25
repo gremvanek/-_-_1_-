@@ -1,3 +1,19 @@
+class CategoryIterator:
+    def __init__(self, products):
+        self.products = products
+        self.index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.index < len(self.products):
+            product = self.products[self.index]
+            self.index += 1
+            return product
+        raise StopIteration
+
+
 class Category:
     total_categories = 0
     total_products = 0
@@ -19,10 +35,16 @@ class Category:
         return self.__description
 
     def get_products(self):
-        result = []
-        for product in self.__products:
-            result.append(f"{product.get_name()}, {product.get_price()} руб. Остаток: {product.get_stock()} шт.")
-        return '\n'.join(result)
+        return '\n'.join(map(str, self.__products))
+
+    def __str__(self):
+        return f"{self.__name}, количество продуктов: {len(self.__products)} шт."
+
+    def __len__(self):
+        return len(self.__products)
+
+    def __iter__(self):
+        return CategoryIterator(self.__products)
 
     @staticmethod
     def get_total_products():
@@ -56,6 +78,17 @@ class Product:
             print("Цена успешно изменена.")
         else:
             print("Изменение цены отменено.")
+
+    def __str__(self):
+        return f"{self.__name}, {self.__price} руб. Остаток: {self.__stock} шт."
+
+    def __add__(self, other):
+        if isinstance(other, Product):
+            total_price = (self.__price * self.__stock) + (other.__price * other.__stock)
+            total_stock = self.__stock + other.__stock
+            return Product(f"{self.__name} + {other.__name}", total_price / total_stock, total_stock)
+        else:
+            raise TypeError("Unsupported operand type for +")
 
     @staticmethod
     def create_product(name, price, stock, category):
