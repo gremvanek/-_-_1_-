@@ -34,6 +34,20 @@ class Category:
         else:
             raise ValueError("Нельзя добавить в категорию объект, не являющийся продуктом")
 
+    def calculate_average_price(self):
+        try:
+            if not self.__products:
+                raise ZeroDivisionError("Нельзя подсчитать средний ценник, если в категории нет товаров.")
+
+            total_price = sum(product.price for product in self.__products)
+            total_quantity = sum(product.get_stock() for product in self.__products)
+
+            return total_price / total_quantity
+
+        except ZeroDivisionError:
+            print("Внимание: Деление на ноль. Средний ценник в категории равен нулю.")
+            return 0
+
     def get_name(self):
         return self.__name
 
@@ -58,6 +72,7 @@ class Category:
 
 
 class Product(ABC):
+
     def __init__(self, name, price, stock):
         self.__name = name
         self.__price = price
@@ -99,10 +114,10 @@ class Product(ABC):
                     product.price = price
                 product_stock = product.get_stock()
                 product_stock += stock
-                product.__stock = product_stock
+                product.set_stock(product_stock)
                 return product
 
-        new_product = Product(name, price, stock)
+        new_product = Smartphone(name, price, stock, "", "", 0, "")
         category.add_product(new_product)
         return new_product
 
@@ -116,6 +131,7 @@ class ReprMixin:
 class Smartphone(Product, ReprMixin):
     def __init__(self, name, price, stock, performance, model, memory_capacity, color):
         super().__init__(name, price, stock)
+        self.__stock = stock
         self.__performance = performance
         self.__model = model
         self.__memory_capacity = memory_capacity
@@ -136,12 +152,16 @@ class Smartphone(Product, ReprMixin):
     def get_color(self):
         return self.__color
 
+    def get_stock(self):
+        return self.__stock
+
 
 class LawnGrass(Product, ReprMixin):
     def __init__(self, name, price, stock, color, height):
         super().__init__(name, price, stock)
         self.__color = color
         self.__height = height
+        self.__stock = stock
 
     def get_description(self):
         return f"Трава газонная {self.__name}"
@@ -152,11 +172,14 @@ class LawnGrass(Product, ReprMixin):
     def get_height(self):
         return self.__height
 
+    def get_stock(self):
+        return self.__stock
+
     class Order(ABC):
-        def __init__(self, product, quantity):
-            self.__product = product
-            self.__quantity = quantity
-            self.__total_price = self.__product.price * self.__quantity
+        def __init__(self, name, price, stock):
+            if stock == 0:
+                raise ValueError("Товар с нулевым количеством не может быть добавлен.")
+            super().__init__(name, price, stock)
 
         @abstractmethod
         def get_total_price(self):
